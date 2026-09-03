@@ -8,6 +8,7 @@ function MovieCard({ title, poster, year, genre, rating, watched }) {
       <div className="card-body">
         <h2 className="card-title">
           {title}
+
           {rating >= 8 && (
             <span className="badge badge-warning">Top Rated</span>
           )}
