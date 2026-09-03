@@ -1,4 +1,14 @@
-function MovieCard({ title, poster, year, genre, rating, watched }) {
+function MovieCard({
+  id,
+  title,
+  poster,
+  year,
+  genre,
+  rating,
+  watched,
+  onToggleWatched,
+  onDelete,
+}) {
   return (
     <div className="card bg-base-100 shadow-xl">
       <figure>
@@ -22,10 +32,27 @@ function MovieCard({ title, poster, year, genre, rating, watched }) {
 
         <div className="card-actions justify-end">
           {watched ? (
-            <span className="badge badge-success">Watched ✓</span>
+            <button
+              className="badge badge-success cursor-pointer"
+              onClick={() => onToggleWatched(id)}
+            >
+              Watched ✓
+            </button>
           ) : (
-            <span className="badge badge-ghost">Unwatched</span>
+            <button
+              className="badge badge-ghost cursor-pointer"
+              onClick={() => onToggleWatched(id)}
+            >
+              Unwatched
+            </button>
           )}
+
+          <button
+            className="btn btn-error btn-sm"
+            onClick={() => onDelete(id)}
+          >
+            🗑️ Delete
+          </button>
         </div>
       </div>
     </div>

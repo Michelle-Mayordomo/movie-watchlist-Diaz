@@ -1,17 +1,14 @@
 import MovieCard from "./MovieCard";
 
-function MovieList({ movies }) {
+function MovieList({ movies, onToggleWatched, onDelete }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {movies.map((movie) => (
         <MovieCard
           key={movie.id}
-          title={movie.title}
-          poster={movie.poster}
-          year={movie.year}
-          genre={movie.genre}
-          rating={movie.rating}
-          watched={movie.watched}
+          {...movie}
+          onToggleWatched={onToggleWatched}
+          onDelete={onDelete}
         />
       ))}
     </div>
