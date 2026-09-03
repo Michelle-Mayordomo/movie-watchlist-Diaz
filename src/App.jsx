@@ -1,113 +1,63 @@
-import { useEffect, useState } from "react";
-import Layout from "./layouts/Layout";
-import MovieList from "./components/MovieList";
-import AddMovieForm from "./components/AddMovieForm";
-import FilterBar from "./components/FilterBar";
-import SummaryBar from "./components/SummaryBar";
-import moviesData from "./data/movies";
+// TODO in App.jsx — new imports
+import { useEffect, useState } from "react"; // useEffect might already be imported from Lab 04
+import { searchMovies, toWatchlistMovie } from "./api/tmdb";
+import SearchBar from "./components/SearchBar";
+import SearchResults from "./components/SearchResults";
 
-export default function App() {
-  // Task 1: Restore movies from localStorage
-  const [movies, setMovies] = useState(() => {
-    const saved = localStorage.getItem("movies");
+// NEW state — for TMDB search
+const [results, setResults] = useState([]);
+const [searchTerm, setSearchTerm] = useState("");
+const [isLoading, setIsLoading] = useState(false);
+const [error, setError] = useState(null);
+useEffect(() => {
+ if (!searchTerm) return; // don't fetch on empty search
+ let isCancelled = false;
+ const fetchResults = async () => {
+ setIsLoading(true);
+ setError(null);
+ try {
+ const movies = await searchMovies(searchTerm);
+ if (!isCancelled) setResults(movies);
+ } catch (err) {
+ if (!isCancelled) setError("Failed to fetch movies. Try again.");
+ } finally {
+ if (!isCancelled) setIsLoading(false);
+ }
+ };
+ fetchResults();
+ return () => {
+ isCancelled = true; // ignore stale response if user searches again
+ };
+}, [searchTerm]);
 
-    return saved ? JSON.parse(saved) : moviesData;
-  });
+const handleAddFromSearch = (tmdbMovie) => {
+ // Avoid adding duplicates
+ if (movies.some((m) => m.id === tmdbMovie.id)) return;
+ const watchlistMovie = toWatchlistMovie(tmdbMovie);
+ setMovies([...movies, watchlistMovie]);
+};
 
-  // Task 3: Restore filter from localStorage
-  const [filter, setFilter] = useState(() => {
-    return localStorage.getItem("filter") || "all";
-  });
 
-  // Task 1: Save movies to localStorage
-  useEffect(() => {
-    localStorage.setItem("movies", JSON.stringify(movies));
-  }, [movies]);
-
-  // Task 2: Update browser tab title
-  // Task 5: Correct dependency array prevents unnecessary runs
-  useEffect(() => {
-    document.title = `Movie Watchlist (${movies.length})`;
-  }, [movies.length]);
-
-  // Task 3: Save filter to localStorage
-  useEffect(() => {
-    localStorage.setItem("filter", filter);
-  }, [filter]);
-
-  // Toggle watched status
-  const handleToggleWatched = (id) => {
-    setMovies(
-      movies.map((movie) =>
-        movie.id === id
-          ? { ...movie, watched: !movie.watched }
-          : movie
-      )
-    );
-  };
-
-  // Delete a movie
-  const handleDeleteMovie = (id) => {
-    setMovies(movies.filter((movie) => movie.id !== id));
-  };
-
-  // Add a movie
-  const handleAddMovie = (newMovie) => {
-    setMovies([...movies, newMovie]);
-  };
-
-  // Task 4: Clear all movies
-  const handleClearAll = () => {
-    if (confirm("Clear your entire watchlist? This cannot be undone.")) {
-      setMovies([]);
-    }
-  };
-
-  // Filter movies
-  const visibleMovies = movies.filter((movie) => {
-    if (filter === "watched") return movie.watched;
-    if (filter === "unwatched") return !movie.watched;
-    return true;
-  });
-
-  return (
-    <Layout>
-      {/* Summary and Clear All */}
-      <div className="flex items-center justify-between mb-6">
-        <SummaryBar movies={movies} />
-
-        <button
-          className="btn btn-error btn-sm"
-          onClick={handleClearAll}
-        >
-          Clear All
-        </button>
-      </div>
-
-      {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">My Watchlist</h1>
-
-        <p className="opacity-70">
-          A collection of movies I've watched and want to watch.
-        </p>
-      </div>
-
-      {/* Add Movie Form */}
-      <AddMovieForm onAddMovie={handleAddMovie} />
-
-      {/* Filter Bar */}
-      <FilterBar
-        currentFilter={filter}
-        onChangeFilter={setFilter}
-      />
-
-      {/* Movie List */}
-      <MovieList
-        movies={visibleMovies}
-        onToggleWatched={handleToggleWatched}
-        onDelete={handleDeleteMovie}
-      />
-    </Layout>
-  );
-}
+return (
+ <div className="container mx-auto p-4">
+ <h1>Movie Watchlist</h1>
+ {/* NEW: TMDB search */}
+ <SearchBar onSearch={setSearchTerm} />
+ <SearchResults
+ results={results}
+ onAdd={handleAddFromSearch}
+ isLoading={isLoading}
+ error={error}
+ />
+ <hr className="my-6" />
+ {/* EXISTING (from Labs 02–04): the personal watchlist */}
+ <SummaryBar movies={movies} />
+ <AddMovieForm onAddMovie={handleAddMovie} />
+ <FilterBar currentFilter={filter} onChangeFilter={setFilter} />
+ <MovieList
+ movies={visibleMovies}
+ onToggleWatched={handleToggleWatched}
+onDelete={handleDeleteMovie}
+ />
+ </div>
+);
